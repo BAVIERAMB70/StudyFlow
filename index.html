@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StudyFlow - Organize seus estudos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+html,body{background:#0b1020;color:#f5f7ff;min-height:100%}
+button,input,select{font:inherit}button{border:0;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #00c2ff;outline-offset:2px}
+.app{display:flex;min-height:100vh}
+.sidebar{position:fixed;z-index:10;top:0;bottom:0;width:250px;padding:25px 18px;background:#11182d;border-right:1px solid #202a46;overflow:auto}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:35px;padding:0 10px}
+.logo-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6c5ce7,#00c2ff);display:grid;place-items:center;font-weight:bold}
+.logo h1{font-size:20px}.logo span{display:block;color:#8d91a7;font-size:11px;margin-top:2px}
+.menu-title{color:#686f8b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:20px 12px 10px}
+.nav-item{width:100%;display:flex;align-items:center;gap:13px;padding:12px 13px;margin-bottom:5px;border-radius:10px;background:transparent;color:#9ba3bf;text-align:left;transition:.2s}
+.nav-item:hover{background:#19213b;color:#fff}.nav-item.active{background:rgba(108,92,231,.18);color:#a99fff;border-left:3px solid #7c6cf0}
+.nav-icon{width:22px;text-align:center;font-weight:bold}
+.main{margin-left:250px;width:calc(100% - 250px);padding:30px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
+.welcome h2{font-size:28px;margin-bottom:7px}.welcome p,.page-title p{color:#858da8}
+.profile{display:flex;align-items:center;gap:12px}
+.notification,.avatar{width:42px;height:42px;border-radius:12px}
+.notification{background:#151e36;color:#fff;font-size:18px}.avatar{border-radius:50%;background:linear-gradient(135deg,#6c5ce7,#00c2ff);display:grid;place-items:center;font-weight:bold}
+.page{display:none}.page.active{display:block;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page-title{margin-bottom:25px}.page-title h2{font-size:27px;margin-bottom:6px}
+.hero{padding:30px;margin-bottom:25px;border:1px solid #252f4e;border-radius:20px;background:radial-gradient(circle at 80% 30%,rgba(0,194,255,.2),transparent 30%),linear-gradient(135deg,#171f3d,#12182e)}
+.hero h2{font-size:25px;margin-bottom:10px}.hero p{color:#9299b3;max-width:600px;line-height:1.6}
+.hero-button,.primary-button,.form-button{padding:12px 18px;border-radius:10px;background:linear-gradient(135deg,#6c5ce7,#5545d0);color:#fff;font-weight:bold;margin-top:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:17px;margin-bottom:25px}
+.card{background:#11182d;border:1px solid #202a46;border-radius:16px;padding:20px}
+.stat-card{display:flex;justify-content:space-between;align-items:center}.stat-title{color:#858da8;font-size:13px;margin-bottom:9px}.stat-number{font-size:25px;font-weight:bold}
+.stat-icon,.subject-icon{display:grid;place-items:center;background:#1b2543}.stat-icon{width:46px;height:46px;border-radius:13px}
+.content-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:20px}.card-header h3{font-size:17px}
+.action-link{background:none;color:#887af3;font-size:12px}
+.task{display:flex;align-items:center;gap:13px;padding:13px;background:#151d34;border-radius:11px;margin-bottom:9px}
+.check{width:21px;height:21px;border:2px solid #555f7c;border-radius:6px;flex-shrink:0;cursor:pointer;position:relative}
+.check.completed{background:#6c5ce7;border-color:#6c5ce7}.check.completed:after{content:"✓";position:absolute;color:#fff;font-size:13px;font-weight:bold;left:2px;top:-2px}
+.task-info,.list-main,.subject-info{flex:1;min-width:0}.task-info strong,.subject-info strong{font-size:13px;display:block}.task-info small,.subject-info small,.list-main small{display:block;color:#747d99;margin-top:4px}
+.completed-task strong{text-decoration:line-through;opacity:.55}
+.priority{font-size:10px;padding:5px 8px;border-radius:6px;background:rgba(255,193,7,.12);color:#ffc107}
+.progress-box{margin-bottom:20px}.progress-box:last-child{margin-bottom:0}.progress-info{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px}.progress-info span:last-child{color:#8f82ff}
+.progress-bar{height:8px;border-radius:10px;background:#202943;overflow:hidden}.progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#6c5ce7,#00c2ff);transition:.4s}
+.subjects{display:grid;gap:10px}.subject{padding:13px;border-radius:11px;background:#151d34;display:flex;align-items:center;gap:12px}
+.subject-icon{width:39px;height:39px;border-radius:10px;flex-shrink:0}
+.focus-card{text-align:center}.focus-description{color:#7d86a2;line-height:1.5}.timer{font-size:42px;font-weight:bold;letter-spacing:2px;margin:20px 0}
+.timer-buttons{display:flex;justify-content:center;gap:10px}.timer-button,.delete-button{padding:10px 16px;border-radius:9px;background:#242d4c;color:#fff}
+.timer-button.primary{background:#6c5ce7}.delete-button{padding:8px 11px;color:#ff8c9c;background:#29233a}
+.form-card{margin-bottom:20px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.form-group{display:flex;flex-direction:column;gap:7px}.form-group.full{grid-column:1/-1}.form-group label{color:#9299b3;font-size:12px}
+.form-group input,.form-group select{padding:12px;border-radius:9px;border:1px solid #303b60;background:#0d1428;color:#fff;outline:0}
+.form-button{margin-top:5px}.list{display:grid;gap:10px}.list-item{background:#151d34;border-radius:12px;padding:15px;display:flex;align-items:center;gap:12px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:20px}.calendar-day{min-height:85px;padding:10px;border-radius:10px;background:#151d34;border:1px solid #202a46}.calendar-day.today{border-color:#6c5ce7}
+.calendar-day-number{font-weight:bold;margin-bottom:7px}.calendar-task{font-size:10px;padding:4px;background:#242d4c;border-radius:5px;margin-top:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.setting{display:flex;justify-content:space-between;align-items:center;background:#151d34;padding:16px;border-radius:12px;margin-bottom:10px;gap:15px}.setting small{display:block;color:#7d86a2;margin-top:5px}
+.switch{width:45px;height:25px;border-radius:20px;background:#303b60;position:relative}.switch:after{content:"";width:19px;height:19px;position:absolute;top:3px;left:3px;border-radius:50%;background:#fff;transition:.2s}.switch.active{background:#6c5ce7}.switch.active:after{left:23px}
+.danger-button{padding:12px 18px;border-radius:9px;background:#342231;color:#ff9baa}.empty{text-align:center;padding:35px 15px;color:#737c98}
+.toast-container{position:fixed;right:20px;bottom:20px;z-index:999;display:flex;flex-direction:column;gap:10px}.toast{background:#171f3d;border:1px solid #303b60;color:#fff;padding:13px 16px;border-radius:10px;box-shadow:0 10px 30px #0005;max-width:320px;font-size:13px;animation:in .25s}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}}
+@media(max-width:750px){.sidebar{width:70px;padding:20px 8px}.logo h1,.logo span,.menu-title,.nav-item span{display:none}.logo{justify-content:center;padding:0}.nav-item{justify-content:center;padding:12px 5px}.main{margin-left:70px;width:calc(100% - 70px);padding:18px}.welcome h2{font-size:21px}.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:auto}.calendar-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:500px){.main{padding:14px}.stats{grid-template-columns:1fr}.notification{display:none}.hero{padding:22px}.hero h2{font-size:21px}.priority{display:none}.timer{font-size:36px}.calendar-grid{grid-template-columns:repeat(2,1fr)}.toast-container{left:14px;right:14px;bottom:14px}.toast{max-width:none}}
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside class="sidebar">
+<div class="logo"><div class="logo-icon">S</div><div><h1>StudyFlow</h1><span>Organize. Estude. Evolua.</span></div></div>
+<div class="menu-title">Principal</div>
+<button class="nav-item active" data-page="dashboard"><b class="nav-icon">IN</b><span>Dashboard</span></button>
+<button class="nav-item" data-page="tasks"><b class="nav-icon">TA</b><span>Minhas tarefas</span></button>
+<button class="nav-item" data-page="subjects"><b class="nav-icon">MA</b><span>Matérias</span></button>
+<button class="nav-item" data-page="calendar"><b class="nav-icon">CA</b><span>Calendário</span></button>
+<div class="menu-title">Estudos</div>
+<button class="nav-item" data-page="focus"><b class="nav-icon">FO</b><span>Foco</span></button>
+<button class="nav-item" data-page="progress"><b class="nav-icon">PR</b><span>Meu progresso</span></button>
+<button class="nav-item" data-page="settings"><b class="nav-icon">CO</b><span>Configurações</span></button>
+</aside>
+
+<main class="main">
+<div class="topbar">
+<div class="welcome"><h2>Olá, estudante!</h2><p>Vamos organizar seus estudos de hoje?</p></div>
+<div class="profile"><button class="notification" id="notificationButton">!</button><div class="avatar">EU</div></div>
+</div>
+
+<section class="page active" id="page-dashboard">
+<div class="hero"><h2>Seu estudo, do seu jeito.</h2><p>Organize suas matérias, acompanhe suas tarefas, mantenha o foco e veja sua evolução em um só lugar.</p><button class="hero-button" id="startStudyButton">Começar a estudar</button></div>
+
+<div class="stats">
+<div class="card stat-card"><div><div class="stat-title">Horas estudadas</div><div class="stat-number" id="studyTime">0h 0m</div></div><div class="stat-icon">H</div></div>
+<div class="card stat-card"><div><div class="stat-title">Tarefas concluídas</div><div class="stat-number" id="completedTasks">0</div></div><div class="stat-icon">OK</div></div>
+<div class="card stat-card"><div><div class="stat-title">Sequência atual</div><div class="stat-number" id="studyStreak">0 dias</div></div><div class="stat-icon">7</div></div>
+<div class="card stat-card"><div><div class="stat-title">Progresso geral</div><div class="stat-number" id="overallProgress">0%</div></div><div class="stat-icon">%</div></div>
+</div>
+
+<div class="content-grid">
+<div class="card"><div class="card-header"><h3>Tarefas de hoje</h3><button class="action-link" data-go="tasks">Ver todas</button></div><div id="dashboardTasks"></div></div>
+<div class="card"><div class="card-header"><h3>Seu progresso</h3><button class="action-link" data-go="progress">Detalhes</button></div><div id="dashboardProgress"></div></div>
+<div class="card"><div class="card-header"><h3>Minhas matérias</h3><button class="action-link" data-go="subjects">+ Adicionar</button></div><div class="subjects" id="dashboardSubjects"></div></div>
+<div class="card focus-card"><div class="card-header"><h3>Modo foco</h3></div><p class="focus-description">Concentre-se durante uma sessão de estudos.</p><div class="timer" id="dashboardTimer">25:00</div><div class="timer-buttons"><button class="timer-button primary" id="startTimerButton">Iniciar</button><button class="timer-button" id="resetTimerButton">Reiniciar</button></div></div>
+</div>
+</section>
+
+<section class="page" id="page-tasks">
+<div class="page-title"><h2>Minhas tarefas</h2><p>Organize tudo que você precisa estudar.</p></div>
+<div class="card form-card"><div class="card-header"><h3>Nova tarefa</h3></div>
+<form id="taskForm"><div class="form-grid">
+<div class="form-group full"><label>Nome da tarefa</label><input id="taskTitle" maxlength="100" placeholder="Ex: Revisar matemática" required></div>
+<div class="form-group"><label>Horário</label><input id="taskTime" type="time" required></div>
+<div class="form-group"><label>Matéria</label><input id="taskSubject" maxlength="50" placeholder="Ex: Matemática" required></div>
+<div class="form-group"><label>Prioridade</label><select id="taskPriority"><option>Baixa</option><option selected>Média</option><option>Alta</option></select></div>
+<div class="form-group"><label>Data</label><input id="taskDate" type="date" required></div>
+<div class="form-group full"><button class="form-button">+ Adicionar tarefa</button></div>
+</div></form></div>
+<div class="card"><div class="card-header"><h3>Todas as tarefas</h3></div><div class="list" id="tasksList"></div></div>
+</section>
+
+<section class="page" id="page-subjects">
+<div class="page-title"><h2>Minhas matérias</h2><p>Acompanhe o desempenho em cada matéria.</p></div>
+<div class="card form-card"><div class="card-header"><h3>Adicionar matéria</h3></div>
+<form id="subjectForm"><div class="form-grid">
+<div class="form-group"><label>Nome da matéria</label><input id="subjectName" maxlength="50" placeholder="Ex: Matemática" required></div>
+<div class="form-group"><label>Progresso inicial (%)</label><input id="subjectProgress" type="number" min="0" max="100" value="0"></div>
+<div class="form-group full"><button class="form-button">+ Adicionar matéria</button></div>
+</div></form></div>
+<div class="card"><div class="card-header"><h3>Suas matérias</h3></div><div class="list" id="subjectsList"></div></div>
+</section>
+
+<section class="page" id="page-calendar">
+<div class="page-title"><h2>Calendário</h2><p>Veja suas tarefas organizadas por data.</p></div>
+<div class="card"><div class="card-header"><button class="timer-button" id="previousMonth">←</button><h3 id="calendarTitle"></h3><button class="timer-button" id="nextMonth">→</button></div><div class="calendar-grid" id="calendarGrid"></div></div>
+</section>
+
+<section class="page" id="page-focus">
+<div class="page-title"><h2>Modo foco</h2><p>Estude com sessões de concentração de 25 minutos.</p></div>
+<div class="card focus-card"><p class="focus-description">Durante a sessão, mantenha o foco em uma única tarefa.</p><div class="timer" id="focusTimer">25:00</div><div class="timer-buttons"><button class="timer-button primary" id="focusStartButton">Iniciar</button><button class="timer-button" id="focusResetButton">Reiniciar</button></div><p style="margin-top:20px;color:#7d86a2;font-size:13px">Sessões concluídas: <strong id="focusSessions">0</strong></p></div>
+</section>
+
+<section class="page" id="page-progress">
+<div class="page-title"><h2>Meu progresso</h2><p>Veja como está sua evolução nos estudos.</p></div>
+<div class="stats">
+<div class="card stat-card"><div><div class="stat-title">Horas estudadas</div><div class="stat-number" id="progressStudyTime">0h 0m</div></div><div class="stat-icon">H</div></div>
+<div class="card stat-card"><div><div class="stat-title">Sessões</div><div class="stat-number" id="progressSessions">0</div></div><div class="stat-icon">FO</div></div>
+<div class="card stat-card"><div><div class="stat-title">Tarefas</div><div class="stat-number" id="progressTasks">0%</div></div><div class="stat-icon">OK</div></div>
+<div class="card stat-card"><div><div class="stat-title">Sequência</div><div class="stat-number" id="progressStreak">0</div></div><div class="stat-icon">7</div></div>
+</div>
+<div class="card"><div class="card-header"><h3>Progresso por matéria</h3></div><div id="progressSubjects"></div></div>
+</section>
+
+<section class="page" id="page-settings">
+<div class="page-title"><h2>Configurações</h2><p>Personalize o funcionamento do StudyFlow.</p></div>
+<div class="card">
+<div class="setting"><div><strong>Notificações</strong><small>Mostrar avisos sobre suas tarefas.</small></div><button class="switch" id="notificationSwitch"></button></div>
+<div class="setting"><div><strong>Armazenamento local</strong><small>Seus dados são salvos neste navegador.</small></div><strong>Ativo</strong></div>
+<div style="margin-top:20px"><button class="danger-button" id="resetDataButton">Restaurar dados</button></div>
+</div>
+</section>
+</main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+"use strict";
+
+const KEY="studyflow_complete_data",DUR=1500;
+const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+const id=p=>p+"-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const timeText=s=>`${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m`;
+const timerText=s=>`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+
+const defaultSubjects=[
+{id:"matematica",name:"Matemática",pending:8,progress:82},
+{id:"geografia",name:"Geografia",pending:3,progress:76},
+{id:"fisica",name:"Física",pending:5,progress:54},
+{id:"portugues",name:"Português",pending:2,progress:91}
+];
+
+const defaultTasks=[
+{id:"task-1",title:"Revisar matemática",time:"14:00",subject:"Matemática",priority:"Alta",completed:false,date:today()},
+{id:"task-2",title:"Estudar capítulo 4",time:"15:30",subject:"História",priority:"Média",completed:false,date:today()},
+{id:"task-3",title:"Fazer exercícios",time:"17:00",subject:"Física",priority:"Alta",completed:false,date:today()},
+{id:"task-4",title:"Ler 10 páginas",time:"19:00",subject:"Português",priority:"Baixa",completed:false,date:today()}
+];
+
+const fresh=()=>({
+tasks:defaultTasks.map(x=>({...x})),
+subjects:defaultSubjects.map(x=>({...x})),
+studySeconds:0,
+completedSessions:0,
+completedDates:[],
+settings:{notifications:true}
+});
+
+let data=fresh(),remaining=DUR,interval=null,cal=new Date();
+
+const $=id=>document.getElementById(id);
+const toast=m=>{
+ const t=document.createElement("div");t.className="toast";t.textContent=m;$("toastContainer").appendChild(t);
+ setTimeout(()=>t.remove(),3000);
+};
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){toast("Não foi possível salvar os dados.")}}
+
+function load(){
+ try{
+  const x=JSON.parse(localStorage.getItem(KEY));
+  if(x&&typeof x==="object")data={
+   tasks:Array.isArray(x.tasks)?x.tasks:defaultTasks.map(a=>({...a})),
+   subjects:Array.isArray(x.subjects)?x.subjects:defaultSubjects.map(a=>({...a})),
+   studySeconds:+x.studySeconds||0,
+   completedSessions:+x.completedSessions||0,
+   completedDates:Array.isArray(x.completedDates)?x.completedDates:[],
+   settings:{notifications:x.settings?.notifications!==false}
+  };
+ }catch(e){toast("Erro ao carregar os dados.")}
+}
+
+function page(p){
+ document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id==="page-"+p));
+ document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===p));
+ render();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+document.addEventListener("click",e=>{
+ const n=e.target.closest(".nav-item"),g=e.target.closest("[data-go]");
+ if(n)return page(n.dataset.page);
+ if(g)return page(g.dataset.go);
+
+ const c=e.target.closest("[data-task]");if(c)return toggleTask(c.dataset.task);
+ const dt=e.target.closest("[data-delete-task]");if(dt)return delTask(dt.dataset.deleteTask);
+ const ds=e.target.closest("[data-delete-subject]");if(ds)return delSubject(ds.dataset.deleteSubject);
+ const ps=e.target.closest("[data-progress]");if(ps)return setProgress(ps.dataset.progress,ps.value);
+});
+
+function streak(){
+ let dates=[...new Set(data.completedDates)].sort(),n=0,d=new Date();
+ d.setHours(0,0,0,0);
+ while(dates.includes(d.toISOString().slice(0,10))){
+  n++;d.setDate(d.getDate()-1);
+ }
+ return n;
+}
+
+function studyDay(){if(!data.completedDates.includes(today()))data.completedDates.push(today())}
+
+function syncSubjects(){
+ data.subjects.forEach(s=>s.pending=data.tasks.filter(t=>!t.completed&&t.subject.toLowerCase()===s.name.toLowerCase()).length);
+}
+
+function overall(){
+ return data.subjects.length?Math.round(data.subjects.reduce((a,s)=>a+(+s.progress||0),0)/data.subjects.length):0;
+}
+
+function toggleTask(id){
+ const t=data.tasks.find(x=>x.id===id);if(!t)return;
+ t.completed=!t.completed;if(t.completed){studyDay();toast("Tarefa concluída!")}else toast("Tarefa pendente.");
+ syncSubjects();save();render();
+}
+
+function delTask(id){
+ data.tasks=data.tasks.filter(x=>x.id!==id);syncSubjects();save();render();toast("Tarefa excluída.");
+}
+
+function delSubject(id){
+ data.subjects=data.subjects.filter(x=>x.id!==id);save();render();toast("Matéria excluída.");
+}
+
+function setProgress(id,value){
+ const s=data.subjects.find(x=>x.id===id);if(!s)return;
+ s.progress=Math.max(0,Math.min(100,+value||0));save();render();
+}
+
+$("taskForm").onsubmit=e=>{
+ e.preventDefault();
+ const title=$("taskTitle").value.trim(),time=$("taskTime").value,subject=$("taskSubject").value.trim(),priority=$("taskPriority").value,date=$("taskDate").value;
+ if(!title||!time||!subject||!date)return toast("Preencha todos os campos.");
+ data.tasks.push({id:id("task"),title,time,subject,priority,completed:false,date});
+ if(!data.subjects.some(s=>s.name.toLowerCase()===subject.toLowerCase()))data.subjects.push({id:id("subject"),name:subject,pending:1,progress:0});
+ syncSubjects();save();e.target.reset();$("taskDate").value=today();render();toast("Nova tarefa adicionada!");
+};
+
+$("subjectForm").onsubmit=e=>{
+ e.preventDefault();
+ const name=$("subjectName").value.trim();let progress=+$("subjectProgress").value||0;
+ if(!name)return toast("Digite o nome da matéria.");
+ if(data.subjects.some(s=>s.name.toLowerCase()===name.toLowerCase()))return toast("Essa matéria já existe.");
+ data.subjects.push({id:id("subject"),name,pending:0,progress:Math.max(0,Math.min(100,progress))});
+ save();e.target.reset();render();toast("Matéria adicionada!");
+};
+
+function taskHTML(t,full=false){
+ return `<div class="${full?"list-item":"task"} ${t.completed?"completed-task":""}">
+ <div class="check ${t.completed?"completed":""}" data-task="${esc(t.id)}" role="checkbox" aria-checked="${t.completed}" tabindex="0"></div>
+ <div class="${full?"list-main":"task-info"}"><strong>${esc(t.title)}</strong><small>${esc(t.date)} - ${esc(t.time)} - ${esc(t.subject)}</small></div>
+ <span class="priority">${esc(t.priority)}</span>
+ ${full?`<button class="delete-button" data-delete-task="${esc(t.id)}">Excluir</button>`:""}
+ </div>`;
+}
+
+function progressHTML(s){
+ let p=Math.max(0,Math.min(100,+s.progress||0));
+ return `<div class="progress-box"><div class="progress-info"><span>${esc(s.name)}</span><span>${p}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div></div>`;
+}
+
+function render(){
+ syncSubjects();
+
+ const done=data.tasks.filter(t=>t.completed).length;
+ $("completedTasks").textContent=done;
+ $("studyTime").textContent=timeText(data.studySeconds);
+ $("studyStreak").textContent=streak()+" dias";
+ $("overallProgress").textContent=overall()+"%";
+
+ let todayTasks=data.tasks.filter(t=>t.date===today()).sort((a,b)=>a.time.localeCompare(b.time)).slice(0,5);
+ $("dashboardTasks").innerHTML=todayTasks.length?todayTasks.map(t=>taskHTML(t)).join(""):'<div class="empty">Nenhuma tarefa para hoje.</div>';
+
+ $("dashboardProgress").innerHTML=data.subjects.length?data.subjects.slice(0,5).map(progressHTML).join(""):'<div class="empty">Nenhuma matéria cadastrada.</div>';
+
+ $("dashboardSubjects").innerHTML=data.subjects.length?data.subjects.slice(0,5).map(s=>`<div class="subject"><div class="subject-icon">${esc(s.name[0]?.toUpperCase())}</div><div class="subject-info"><strong>${esc(s.name)}</strong><small>${s.pending} tarefas pendentes</small></div><span>${+s.progress||0}%</span></div>`).join(""):'<div class="empty">Nenhuma matéria cadastrada.</div>';
+
+ const tasks=[...data.tasks].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ $("tasksList").innerHTML=tasks.length?tasks.map(t=>taskHTML(t,true)).join(""):'<div class="empty">Nenhuma tarefa cadastrada.</div>';
+
+ $("subjectsList").innerHTML=data.subjects.length?data.subjects.map(s=>`<div class="list-item"><div class="subject-icon">${esc(s.name[0]?.toUpperCase())}</div><div class="list-main"><strong>${esc(s.name)}</strong><small>${s.pending} tarefas pendentes</small><div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${+s.progress||0}%"></div></div></div><input type="number" min="0" max="100" value="${+s.progress||0}" data-progress="${esc(s.id)}" style="width:65px;padding:8px;border-radius:7px;border:1px solid #303b60;background:#0d1428;color:#fff"><button class="delete-button" data-delete-subject="${esc(s.id)}">Excluir</button></div>`).join(""):'<div class="empty">Nenhuma matéria cadastrada.</div>';
+
+ $("progressStudyTime").textContent=timeText(data.studySeconds);
+ $("progressSessions").textContent=data.completedSessions;
+ $("progressTasks").textContent=(data.tasks.length?Math.round(done/data.tasks.length*100):0)+"%";
+ $("progressStreak").textContent=streak()+" dias";
+ $("progressSubjects").innerHTML=data.subjects.length?data.subjects.map(progressHTML).join(""):'<div class="empty">Nenhuma matéria cadastrada.</div>';
+
+ $("notificationSwitch").classList.toggle("active",data.settings.notifications);
+ $("notificationSwitch").setAttribute("aria-pressed",data.settings.notifications);
+ updateTimer();calendar();
+}
+
+function updateTimer(){
+ let x=timerText(remaining);$("dashboardTimer").textContent=x;$("focusTimer").textContent=x;$("focusSessions").textContent=data.completedSessions;
+ let text=interval?"Pausar":remaining<DUR?"Continuar":"Iniciar";
+ $("startTimerButton").textContent=text;$("focusStartButton").textContent=text;
+}
+
+function toggleTimer(){
+ if(interval){clearInterval(interval);interval=null;toast("Timer pausado.");updateTimer();return}
+ toast("Sessão de foco iniciada.");
+ interval=setInterval(()=>{
+  if(remaining<=0)return finish();
+  remaining--;updateTimer();
+ },1000);
+ updateTimer();
+}
+
+function resetTimer(){
+ clearInterval(interval);interval=null;remaining=DUR;updateTimer();toast("Timer reiniciado.");
+}
+
+function finish(){
+ clearInterval(interval);interval=null;
+ data.completedSessions++;data.studySeconds+=DUR;studyDay();remaining=DUR;save();render();toast("Sessão concluída! Faça uma pequena pausa.");
+}
+
+$("startTimerButton").onclick=toggleTimer;
+$("focusStartButton").onclick=toggleTimer;
+$("resetTimerButton").onclick=resetTimer;
+$("focusResetButton").onclick=resetTimer;
+$("startStudyButton").onclick=()=>{page("focus");if(!interval)toggleTimer()};
+
+$("notificationButton").onclick=()=>{
+ let p=data.tasks.filter(t=>!t.completed);
+ toast(p.length?p.length+" tarefa(s) pendente(s). Próxima: "+[...p].sort((a,b)=>a.time.localeCompare(b.time))[0].title:"Você não possui tarefas pendentes!");
+};
+
+$("notificationSwitch").onclick=()=>{
+ data.settings.notifications=!data.settings.notifications;save();render();
+ toast(data.settings.notifications?"Notificações ativadas.":"Notificações desativadas.");
+};
+
+$("resetDataButton").onclick=()=>{
+ if(!confirm("Tem certeza que deseja restaurar todos os dados?"))return;
+ clearInterval(interval);interval=null;remaining=DUR;data=fresh();save();render();toast("Dados restaurados com sucesso.");
+};
+
+$("previousMonth").onclick=()=>{cal.setMonth(cal.getMonth()-1);calendar()};
+$("nextMonth").onclick=()=>{cal.setMonth(cal.getMonth()+1);calendar()};
+
+function calendar(){
+ let y=cal.getFullYear(),m=cal.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+ let names=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+ $("calendarTitle").textContent=names[m]+" "+y;
+ let h="";
+ for(let i=0;i<first;i++)h+='<div class="calendar-day"></div>';
+ for(let d=1;d<=days;d++){
+  let k=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`,ts=data.tasks.filter(t=>t.date===k);
+  h+=`<div class="calendar-day ${k===today()?"today":""}"><div class="calendar-day-number">${d}</div>${ts.map(t=>`<div class="calendar-task" title="${esc(t.title)}">${esc(t.time)} - ${esc(t.title)}</div>`).join("")}</div>`;
+ }
+ $("calendarGrid").innerHTML=h;
+}
+
+$("taskDate").value=today();
+load();syncSubjects();render();
+</script>
+</body>
+</html>
